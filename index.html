@@ -39,7 +39,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .slot.selected .slot-check{background:var(--primary);border-color:var(--primary)}
 .slot.selected .slot-check::after{content:'✓';color:#fff;font-size:13px;font-weight:700}
 
-/* ── 時間選擇器 ── */
 .time-picker{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
 .time-picker-label{font-size:13px;font-weight:500;color:var(--text-light);margin-bottom:8px}
 .time-options{display:flex;flex-wrap:wrap;gap:6px}
@@ -86,6 +85,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .success-detail{background:var(--primary-light);border-radius:var(--radius);
   padding:16px;margin-top:20px;text-align:left;font-size:14px;line-height:1.8}
 .success-detail strong{color:var(--primary)}
+
+/* ── 管理模式 ── */
+.admin-bar{background:var(--card);border:2px dashed var(--primary);border-radius:var(--radius);
+  padding:16px;margin-bottom:20px}
+.admin-bar .admin-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+  background:var(--primary);padding:2px 8px;border-radius:6px;margin-bottom:12px}
+.admin-bar .field{margin-bottom:10px}
+.admin-bar .field:last-of-type{margin-bottom:12px}
+.admin-bar .field label{font-size:12px}
+.admin-bar .field input{font-size:14px;padding:8px 10px}
+.btn-small{padding:10px 16px;font-size:14px;border-radius:8px;width:auto}
 </style>
 </head>
 <body>
@@ -94,6 +104,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     <h1 id="pageTitle"></h1>
     <p id="pageSubtitle"></p>
   </div>
+  <div id="adminArea"></div>
   <div id="app">
     <div class="loading"><div class="spinner"></div><div>載入可預約時段中...</div></div>
   </div>
@@ -102,24 +113,92 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 
 <script>
 // ════════════════════════════════════════
-// ★ 自訂設定區 — 只需要改這裡 ★
+// ★ 預設設定（可在網頁管理模式中修改）★
 // ════════════════════════════════════════
-const CONFIG = {
-  title: '預約陪談時段',           // ← 改成你要的標題
-  subtitle: '選擇適合你的時間，點擊確認即可完成預約',  // ← 副標題
-  sessionMinutes: 60,              // ← 每次陪談時長（分鐘）
-  timeStepMinutes: 30,             // ← 可選時間的間隔（分鐘）
+const DEFAULTS = {
+  title: '預約陪談時段',
+  subtitle: '選擇適合你的時間，點擊確認即可完成預約',
+  sessionMinutes: 60,
+  timeStepMinutes: 30,
   apiBase: 'https://booking-worker.iocloudy.workers.dev',
 };
 // ════════════════════════════════════════
 
-document.getElementById('pageTitle').textContent = CONFIG.title;
-document.getElementById('pageSubtitle').textContent = CONFIG.subtitle;
-document.title = CONFIG.title;
+// 從 Worker 載入設定，載不到就用預設值
+let CONFIG = { ...DEFAULTS };
+
+const urlParams = new URLSearchParams(window.location.search);
+const isAdmin = urlParams.get('admin') === '1';
+
+async function loadConfig() {
+  try {
+    const res = await fetch(`${DEFAULTS.apiBase}/api/config`);
+    if (res.ok) {
+      const saved = await res.json();
+      CONFIG = { ...DEFAULTS, ...saved };
+    }
+  } catch (e) { /* 用預設值 */ }
+  applyConfig();
+}
+
+function applyConfig() {
+  document.getElementById('pageTitle').textContent = CONFIG.title;
+  document.getElementById('pageSubtitle').textContent = CONFIG.subtitle;
+  document.title = CONFIG.title;
+}
+
+// ── 管理模式 ──
+function renderAdmin() {
+  if (!isAdmin) return;
+  document.getElementById('adminArea').innerHTML = `
+    <div class="admin-bar">
+      <span class="admin-badge">管理模式</span>
+      <div class="field">
+        <label>頁面標題</label>
+        <input type="text" id="adminTitle" value="${CONFIG.title}" placeholder="輸入標題">
+      </div>
+      <div class="field">
+        <label>副標題</label>
+        <input type="text" id="adminSubtitle" value="${CONFIG.subtitle}" placeholder="輸入副標題">
+      </div>
+      <div class="field">
+        <label>每次時長（分鐘）</label>
+        <input type="number" id="adminSession" value="${CONFIG.sessionMinutes}" min="15" max="180" style="width:100px">
+      </div>
+      <button class="btn btn-primary btn-small" onclick="saveConfig()">儲存設定</button>
+    </div>`;
+}
+
+async function saveConfig() {
+  const title = document.getElementById('adminTitle').value.trim();
+  const subtitle = document.getElementById('adminSubtitle').value.trim();
+  const sessionMinutes = parseInt(document.getElementById('adminSession').value) || 60;
+
+  try {
+    const res = await fetch(`${DEFAULTS.apiBase}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, subtitle, sessionMinutes }),
+    });
+    if (res.ok) {
+      CONFIG.title = title;
+      CONFIG.subtitle = subtitle;
+      CONFIG.sessionMinutes = sessionMinutes;
+      applyConfig();
+      showToast('設定已儲存', 'success');
+    } else {
+      showToast('儲存失敗', 'error');
+    }
+  } catch (e) {
+    showToast('網路錯誤', 'error');
+  }
+}
+
+// ── 以下為預約功能 ──
 
 let slots = [];
 let selectedSlotId = null;
-let selectedTime = null; // 學員選的開始時間 (ISO string)
+let selectedTime = null;
 
 const WEEKDAYS = ['日','一','二','三','四','五','六'];
 
@@ -143,14 +222,12 @@ function showToast(msg, type) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// 判斷是否為「時間範圍」型時段（有 end 且跨度 > sessionMinutes）
 function isRangeSlot(slot) {
   if (!slot.end) return false;
   const diff = new Date(slot.end) - new Date(slot.start);
   return diff > CONFIG.sessionMinutes * 60 * 1000;
 }
 
-// 產生可選的時間選項
 function generateTimeOptions(slot) {
   const options = [];
   const start = new Date(slot.start);
@@ -216,7 +293,6 @@ function render() {
           </div>
         </div>`;
 
-      // 選中且是範圍型 → 顯示時間選擇器
       if (sel && range) {
         const options = generateTimeOptions(s);
         html += `<div class="time-picker">
@@ -230,13 +306,11 @@ function render() {
         });
         html += '</div></div>';
       }
-
       html += '</div>';
     });
     html += '</div>';
   }
 
-  // 判斷是否可以顯示表單
   const selectedSlot = slots.find(s => s.id === selectedSlotId);
   const canShowForm = selectedSlotId && (!isRangeSlot(selectedSlot) || selectedTime);
 
@@ -258,16 +332,11 @@ function render() {
 
 function selectSlot(id) {
   if (selectedSlotId === id) {
-    selectedSlotId = null;
-    selectedTime = null;
+    selectedSlotId = null; selectedTime = null;
   } else {
-    selectedSlotId = id;
-    selectedTime = null;
-    // 非範圍型時段，自動設定時間
+    selectedSlotId = id; selectedTime = null;
     const slot = slots.find(s => s.id === id);
-    if (!isRangeSlot(slot)) {
-      selectedTime = slot.start;
-    }
+    if (!isRangeSlot(slot)) selectedTime = slot.start;
   }
   render();
 }
@@ -280,42 +349,30 @@ function pickTime(isoTime) {
 async function submitBooking() {
   const name = document.getElementById('studentName').value.trim();
   const notes = document.getElementById('notes').value.trim();
-
   if (!name) { showToast('請填寫你的姓名', 'error'); return; }
   if (!selectedTime) { showToast('請選擇時間', 'error'); return; }
 
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.textContent = '預約中...';
-
+  btn.disabled = true; btn.textContent = '預約中...';
   const chosenEnd = new Date(new Date(selectedTime).getTime() + CONFIG.sessionMinutes * 60000).toISOString();
 
   try {
     const res = await fetch(`${CONFIG.apiBase}/api/book`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        slotId: selectedSlotId,
-        studentName: name,
-        notes,
-        chosenStart: selectedTime,
-        chosenEnd: chosenEnd,
-      }),
+      body: JSON.stringify({ slotId: selectedSlotId, studentName: name, notes, chosenStart: selectedTime, chosenEnd }),
     });
     const data = await res.json();
-
     if (data.ok) {
       showSuccessScreen(name);
     } else {
       showToast(data.error || '預約失敗，請重試', 'error');
-      btn.disabled = false;
-      btn.textContent = '確認預約';
+      btn.disabled = false; btn.textContent = '確認預約';
       loadSlots();
     }
   } catch (e) {
     showToast('網路錯誤，請稍後再試', 'error');
-    btn.disabled = false;
-    btn.textContent = '確認預約';
+    btn.disabled = false; btn.textContent = '確認預約';
   }
 }
 
@@ -324,7 +381,6 @@ function showSuccessScreen(name) {
   const startDate = slot ? `${formatDate(slot.start)} ${formatWeekday(slot.start)}` : '';
   const startTime = selectedTime ? formatTime(selectedTime) : '';
   const endTime = selectedTime ? formatTime(new Date(new Date(selectedTime).getTime() + CONFIG.sessionMinutes*60000).toISOString()) : '';
-
   document.getElementById('app').innerHTML = `<div class="success-screen">
     <div class="success-icon">✅</div>
     <h2>預約成功！</h2>
@@ -338,7 +394,11 @@ function showSuccessScreen(name) {
   </div>`;
 }
 
-loadSlots();
+// ── 啟動 ──
+loadConfig().then(() => {
+  renderAdmin();
+  loadSlots();
+});
 </script>
 </body>
 </html>
