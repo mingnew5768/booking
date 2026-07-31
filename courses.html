@@ -19,16 +19,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .header h1{font-size:22px;font-weight:700;letter-spacing:0.5px;color:var(--accent)}
 .header p{font-size:14px;color:var(--text-light);margin-top:6px}
 
-.navlink{display:block;text-align:center;font-size:13px;color:var(--text-light);
-  text-decoration:none;padding:10px;margin-bottom:16px;border:1px solid var(--border);
-  border-radius:var(--radius);background:var(--card)}
-.navlink b{color:var(--primary)}
+.navwrap{margin-bottom:18px}
+.navlink{display:inline-flex;align-items:center;gap:6px;font-size:13px;
+  color:var(--text-light);text-decoration:none;padding:8px 14px;
+  border:1px solid var(--border);border-radius:999px;background:var(--card);
+  transition:all .2s}
+.navlink:active{transform:scale(.97)}
+.navlink b{color:var(--primary);font-weight:700}
+.navlink .arw{color:var(--border)}
 
-.course{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
-  padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.course{display:block;background:var(--card);border:2px solid var(--border);
+  border-radius:var(--radius);margin-bottom:12px;transition:all .2s;
+  overflow:hidden;text-decoration:none;color:inherit}
 .course:active{transform:scale(0.99)}
-.course.selected{border-color:var(--accent);background:var(--accent-light)}
-.course.full{opacity:.6;cursor:not-allowed}
+.course.full{opacity:.65}
+.course-dm{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:var(--border)}
+.course-body{padding:16px}
+.course-go{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);
+  font-size:14px;font-weight:700;color:var(--accent);text-align:right}
 .course-name{font-size:17px;font-weight:700;line-height:1.4}
 .course-meta{font-size:13px;color:var(--text-light);margin-top:8px;line-height:1.7}
 .course-meta .ico{display:inline-block;width:18px}
@@ -116,6 +124,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .ms-status.closed{background:#F3E7D9;color:var(--warn)}
 .ms-status.past{background:var(--border);color:var(--text-light)}
 .hint{font-size:12px;color:var(--text-light);line-height:1.6;margin-bottom:10px}
+.hint2{font-size:12px;color:var(--text-light);line-height:1.6}
+.result-ok{margin-top:12px;padding:12px;background:var(--accent-light);
+  border-radius:8px;font-size:13px;line-height:1.7}
+.rlinks{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.rlinks a{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none}
+.sharebox{margin-top:10px;padding:10px;background:var(--card);border-radius:6px}
+.sharebox code{font-size:11px;word-break:break-all;color:var(--text)}
+.minibtn{padding:6px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);text-decoration:none;display:inline-block}
 .roster{margin-top:8px;padding:10px;background:var(--card);border-radius:6px;
   font-size:12px;line-height:1.8;max-height:220px;overflow:auto}
 .chk{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px;color:var(--text-light)}
@@ -128,7 +145,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     <h1 id="pageTitle">課程報名</h1>
     <p id="pageSubtitle">選擇想參加的課程，填寫資料即可完成報名</p>
   </div>
-  <a class="navlink" href="./" id="navLink">想預約 <b>1 對 1 陪談</b> 時段？點這裡 →</a>
+  <div class="navwrap" id="navLink">
+    <a class="navlink" href="./">想預約 <b>1 對 1 陪談</b>？<span class="arw">→</span></a>
+  </div>
   <div id="adminArea"></div>
   <div id="app">
     <div class="loading"><div class="spinner"></div><div>載入中...</div></div>
@@ -163,6 +182,16 @@ async function loadConfig() {
     const res = await fetch(`${API}/api/config`);
     if (res.ok) CONFIG = { ...CONFIG, ...(await res.json()) };
   } catch (e) {}
+  applyConfig();
+}
+
+function applyConfig() {
+  const t = CONFIG.courseTitle || '課程報名';
+  const s = CONFIG.courseSubtitle || '';
+  document.getElementById('pageTitle').textContent = t;
+  document.getElementById('pageSubtitle').textContent = s;
+  document.getElementById('pageSubtitle').style.display = s ? '' : 'none';
+  document.title = t;
 }
 
 // ════════════════════════════════════════
@@ -232,6 +261,21 @@ function renderAdmin() {
       <div class="admin-tabs">
         <div class="admin-tab ${adminTab==='create'?'active':''}" onclick="switchTab('create')">開新課程</div>
         <div class="admin-tab ${adminTab==='manage'?'active':''}" onclick="switchTab('manage')">課程與名單</div>
+        <div class="admin-tab ${adminTab==='page'?'active':''}" onclick="switchTab('page')">頁面設定</div>
+      </div>
+
+      <div class="admin-panel ${adminTab==='page'?'active':''}">
+        <div class="field">
+          <label>頁面標題</label>
+          <input type="text" id="pgTitle" value="${esc(CONFIG.courseTitle || '課程報名')}">
+        </div>
+        <div class="field">
+          <label>副標題</label>
+          <input type="text" id="pgSubtitle" value="${esc(CONFIG.courseSubtitle || '')}"
+            placeholder="留空則不顯示">
+        </div>
+        <div class="hint">只影響課程報名頁。1 對 1 陪談頁的標題請到那一頁的管理模式改。</div>
+        <button class="btn btn-primary btn-small" onclick="savePageConfig()">儲存設定</button>
       </div>
 
       <div class="admin-panel ${adminTab==='create'?'active':''}">
@@ -272,6 +316,7 @@ function renderAdmin() {
           同時建立 Google Calendar 事件（報名名單會自動同步到事件說明）
         </label>
         <button class="btn btn-primary btn-small" onclick="createCourse()" id="createBtn">建立課程</button>
+        <div id="createResult"></div>
       </div>
 
       <div class="admin-panel ${adminTab==='manage'?'active':''}">
@@ -283,6 +328,23 @@ function renderAdmin() {
 }
 
 function switchTab(t){ adminTab=t; renderAdmin(); if(t==='manage') loadAdminCourses(); }
+
+async function savePageConfig() {
+  const payload = {
+    courseTitle: document.getElementById('pgTitle').value.trim() || '課程報名',
+    courseSubtitle: document.getElementById('pgSubtitle').value.trim(),
+  };
+  try {
+    const res = await fetch(`${API}/api/config`, {
+      method:'POST', headers: adminHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.ok) {
+      CONFIG = { ...CONFIG, ...data.config };
+      applyConfig();
+      showToast('設定已儲存', 'success');
+    } else showToast(data.error || '儲存失敗', 'error');
+  } catch (e) { showToast('網路錯誤', 'error'); }
+}
 
 async function createCourse() {
   const btn = document.getElementById('createBtn');
@@ -304,6 +366,21 @@ async function createCourse() {
     const data = await res.json();
     if (data.ok) {
       showToast('課程已建立', 'success');
+      document.getElementById('createResult').innerHTML = `
+        <div class="result-ok">
+          <strong>課程已建立</strong><br>
+          <span class="hint2">下一步：到 Notion 補上 DM 圖片、費用、適合對象等介紹內容。</span>
+          <div class="rlinks">
+            <a href="${esc(data.notionUrl)}" target="_blank" rel="noopener">✏️ 在 Notion 編輯介紹</a>
+            <a href="${esc(data.shareUrl)}" target="_blank" rel="noopener">👁 預覽課程頁</a>
+          </div>
+          <div class="sharebox">
+            <div class="hint2" style="margin-bottom:6px">分享給學員的網址：</div>
+            <code>${esc(data.shareUrl)}</code>
+            <button class="btn btn-ghost btn-small" style="width:100%;margin-top:8px"
+              onclick="copyText('${esc(data.shareUrl)}')">複製網址</button>
+          </div>
+        </div>`;
       document.getElementById('cName').value = '';
       document.getElementById('cDesc').value = '';
       document.getElementById('cCap').value = '';
@@ -338,6 +415,9 @@ async function loadAdminCourses() {
           <span class="ms-status ${cls}">${esc(label)}</span>
         </div>
         <div class="mini-actions">
+          <button onclick="copyText('${c.url}')">複製連結</button>
+          <a class="minibtn" href="${esc(c.notionUrl)}" target="_blank" rel="noopener">編輯介紹</a>
+          <a class="minibtn" href="${esc(c.url)}" target="_blank" rel="noopener">預覽</a>
           <button onclick="toggleRoster('${c.id}')">看名單</button>
           ${!c.past ? `<button onclick="setStatus('${c.id}','${c.status==='開放報名'?'已關閉':'開放報名'}')">${c.status==='開放報名'?'關閉報名':'重新開放'}</button>` : ''}
           <button onclick="copyRoster('${c.id}')">複製名單</button>
@@ -406,10 +486,9 @@ async function delCourse(id) {
 }
 
 // ════════════════════════════════════════
-// 報名主流程
+// 課程列表（點卡片進獨立課程頁）
 // ════════════════════════════════════════
 let courses = [];
-let selectedId = null;
 
 async function loadCourses() {
   try {
@@ -430,10 +509,7 @@ function render() {
     return;
   }
 
-  let html = '';
-  courses.forEach(c => {
-    const sel = c.id === selectedId ? ' selected' : '';
-    const full = c.full ? ' full' : '';
+  app.innerHTML = courses.map(c => {
     const hasCap = c.capacity != null && c.capacity > 0;
     const pct = hasCap ? Math.min(100, Math.round(c.enrolled / c.capacity * 100)) : 0;
     const remain = hasCap ? c.capacity - c.enrolled : null;
@@ -443,107 +519,32 @@ function render() {
     if (c.full) badge = '<span class="badge-full">額滿</span>';
     else if (hasCap && remain <= 3) badge = `<span class="badge-few">剩 ${remain} 位</span>`;
 
-    html += `<div class="course${sel}${full}" onclick="${c.full ? '' : `selectCourse('${c.id}')`}">
-      <div class="course-name">${esc(c.name)}${badge}</div>
-      <div class="course-meta">
-        <span class="ico">📅</span>${fDate(c.start)} ${fWeek(c.start)}<br>
-        <span class="ico">🕐</span>${fTime(c.start)}${c.end ? ' – '+fTime(c.end) : ''}
-        ${c.location ? `<br><span class="ico">📍</span>${esc(c.location)}` : ''}
+    return `<a class="course${c.full ? ' full' : ''}" href="${esc(c.url)}">
+      ${c.dmImage ? `<img class="course-dm" src="${esc(c.dmImage)}" alt="" loading="lazy">` : ''}
+      <div class="course-body">
+        <div class="course-name">${esc(c.name)}${badge}</div>
+        <div class="course-meta">
+          <span class="ico">📅</span>${fDate(c.start)} ${fWeek(c.start)}<br>
+          <span class="ico">🕐</span>${fTime(c.start)}${c.end ? ' – ' + fTime(c.end) : ''}
+          ${c.location ? `<br><span class="ico">📍</span>${esc(c.location)}` : ''}
+          ${c.fee ? `<br><span class="ico">💰</span>${esc(c.fee)}` : ''}
+        </div>
+        ${hasCap ? `<div class="cap-row">
+          <div class="cap-bar"><div class="cap-fill ${fillCls}" style="width:${pct}%"></div></div>
+          <div class="cap-text">${c.enrolled} / ${c.capacity}</div>
+        </div>` : `<div class="cap-row"><div class="cap-text">已報名 ${c.enrolled} 人・不限名額</div></div>`}
+        <div class="course-go">${c.full ? '查看課程詳情' : '看詳情並報名'} →</div>
       </div>
-      ${hasCap ? `<div class="cap-row">
-        <div class="cap-bar"><div class="cap-fill ${fillCls}" style="width:${pct}%"></div></div>
-        <div class="cap-text">${c.enrolled} / ${c.capacity}</div>
-      </div>` : `<div class="cap-row"><div class="cap-text">已報名 ${c.enrolled} 人・不限名額</div></div>`}
-      ${c.description ? `<div class="course-desc">${esc(c.description)}</div>` : ''}
-    </div>`;
-  });
-
-  html += `<div class="form-section${selectedId ? '' : ' hidden'}" id="enrollForm">
-    <div class="form-title">填寫報名資料</div>
-    <div class="field">
-      <label class="required">你的姓名</label>
-      <input type="text" id="sName" placeholder="請輸入姓名" maxlength="50">
-    </div>
-    <div class="field">
-      <label>聯絡方式</label>
-      <input type="text" id="sContact" placeholder="手機或 Email（方便通知課程異動）" maxlength="100">
-    </div>
-    <div class="field">
-      <label>備註（選填）</label>
-      <textarea id="sNotes" placeholder="想了解的主題、飲食需求等" maxlength="1000"></textarea>
-    </div>
-    <button class="btn btn-primary" id="enrollBtn" onclick="submitEnroll()">確認報名</button>
-  </div>`;
-
-  app.innerHTML = html;
-}
-
-function selectCourse(id) {
-  selectedId = (selectedId === id) ? null : id;
-  render();
-  if (selectedId) {
-    setTimeout(() => document.getElementById('enrollForm').scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
-  }
-}
-
-async function submitEnroll() {
-  const name = document.getElementById('sName').value.trim();
-  const contact = document.getElementById('sContact').value.trim();
-  const notes = document.getElementById('sNotes').value.trim();
-  if (!name) { showToast('請填寫你的姓名', 'error'); return; }
-
-  const btn = document.getElementById('enrollBtn');
-  btn.disabled = true; btn.textContent = '報名中...';
-  try {
-    const res = await fetch(`${API}/api/enroll`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId: selectedId, studentName: name, contact, notes }),
-    });
-    const data = await res.json();
-    if (data.ok) showSuccess(name, data);
-    else {
-      showToast(data.error || '報名失敗，請重試', 'error');
-      btn.disabled = false; btn.textContent = '確認報名';
-      selectedId = null;
-      loadCourses();
-    }
-  } catch (e) {
-    showToast('網路錯誤，請稍後再試', 'error');
-    btn.disabled = false; btn.textContent = '確認報名';
-  }
-}
-
-function showSuccess(name, data) {
-  const c = data.course;
-  const cancelUrl = data.cancelUrl || `${location.origin}${location.pathname}?cancel=${data.cancelToken}`;
-  document.getElementById('adminArea').innerHTML = '';
-  document.getElementById('navLink').style.display = 'none';
-  document.getElementById('app').innerHTML = `<div class="success-screen">
-    <div class="success-icon">🎉</div>
-    <h2>報名成功！</h2>
-    <p>期待在課堂上見到你</p>
-    <div class="success-detail">
-      <strong>報名人：</strong>${esc(name)}<br>
-      <strong>課程：</strong>${esc(c.name)}<br>
-      <strong>時間：</strong>${fDate(c.start)} ${fWeek(c.start)} ${fTime(c.start)}${c.end?' – '+fTime(c.end):''}
-      ${c.location ? `<br><strong>地點：</strong>${esc(c.location)}` : ''}
-      <br><strong>目前報名：</strong>${data.enrolled}${data.capacity ? ' / '+data.capacity : ''} 人
-    </div>
-    <div class="cancel-note">
-      <strong style="color:var(--text)">需要取消報名？</strong><br>
-      請保存以下連結（建議截圖或加到書籤）。課程前 ${data.cancelCutoffHours || CONFIG.cancelCutoffHours} 小時之前都可以自行取消：<br>
-      <a href="${esc(cancelUrl)}">${esc(cancelUrl)}</a><br><br>
-      <button class="btn btn-ghost btn-small" style="width:100%" onclick="copyText('${esc(cancelUrl)}')">複製取消連結</button>
-    </div>
-  </div>`;
+    </a>`;
+  }).join('');
 }
 
 function copyText(t) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(t).then(
       () => showToast('已複製', 'success'),
-      () => showToast('複製失敗，請長按連結手動複製', 'error'));
-  } else showToast('請長按連結手動複製', 'error');
+      () => showToast('複製失敗，請長按手動複製', 'error'));
+  } else showToast('請長按手動複製', 'error');
 }
 
 // ════════════════════════════════════════
@@ -552,7 +553,7 @@ function copyText(t) {
 async function renderCancelPage() {
   document.getElementById('pageTitle').textContent = '取消報名';
   document.getElementById('pageSubtitle').textContent = '';
-  document.getElementById('navLink').style.display = 'none';
+  const nav = document.getElementById('navLink'); if (nav) nav.style.display = 'none';
   document.title = '取消報名';
   const app = document.getElementById('app');
   try {
