@@ -9,7 +9,7 @@
 :root{
   --bg:#F7F5F2;--card:#fff;--primary:#5B7B6F;--primary-light:#E8F0EC;
   --text:#2C3E35;--text-light:#7A8A80;--border:#E4DDD6;
-  --success:#4A8B6E;--error:#C85454;--radius:12px;
+  --success:#4A8B6E;--error:#C85454;--warn:#B8863B;--radius:12px;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
@@ -53,9 +53,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .form-title{font-size:15px;font-weight:600;margin-bottom:14px}
 .field{margin-bottom:14px}
 .field label{font-size:13px;font-weight:500;color:var(--text-light);display:block;margin-bottom:6px}
-.field input,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);
+.field input,.field textarea,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);
   border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border .2s;
-  background:var(--bg)}
+  background:var(--bg);color:var(--text)}
 .field input:focus,.field textarea:focus{border-color:var(--primary)}
 .field textarea{resize:vertical;min-height:60px}
 .required::after{content:' *';color:var(--error)}
@@ -64,6 +64,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:active{background:#4A6A5E}
 .btn-primary:disabled{background:var(--border);color:var(--text-light);cursor:not-allowed}
+.btn-danger{background:var(--error);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-light);border:1.5px solid var(--border)}
 
 .loading{text-align:center;padding:60px 0;color:var(--text-light);font-size:14px}
 .loading .spinner{width:32px;height:32px;border:3px solid var(--border);
@@ -85,17 +87,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 .success-detail{background:var(--primary-light);border-radius:var(--radius);
   padding:16px;margin-top:20px;text-align:left;font-size:14px;line-height:1.8}
 .success-detail strong{color:var(--primary)}
+.cancel-note{margin-top:18px;padding:14px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);font-size:13px;color:var(--text-light);text-align:left;line-height:1.7}
+.cancel-note a{color:var(--primary);word-break:break-all}
 
 /* ── 管理模式 ── */
+.navlink{display:block;text-align:center;font-size:13px;color:var(--text-light);
+  text-decoration:none;padding:10px;margin-bottom:16px;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--card)}
+.navlink b{color:#8A6E52}
 .admin-bar{background:var(--card);border:2px dashed var(--primary);border-radius:var(--radius);
   padding:16px;margin-bottom:20px}
-.admin-bar .admin-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+.admin-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;
   background:var(--primary);padding:2px 8px;border-radius:6px;margin-bottom:12px}
 .admin-bar .field{margin-bottom:10px}
-.admin-bar .field:last-of-type{margin-bottom:12px}
 .admin-bar .field label{font-size:12px}
 .admin-bar .field input{font-size:14px;padding:8px 10px}
 .btn-small{padding:10px 16px;font-size:14px;border-radius:8px;width:auto}
+.admin-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.admin-tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--text-light);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.admin-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.admin-panel{display:none}
+.admin-panel.active{display:block}
+.row2{display:flex;gap:10px}
+.row2 .field{flex:1}
+.wd-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.wd{padding:8px 0;width:40px;text-align:center;border:1.5px solid var(--border);
+  border-radius:8px;font-size:14px;cursor:pointer;background:var(--bg);user-select:none}
+.wd.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.mini-slot{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);
+  border-radius:8px;margin-bottom:6px;background:var(--bg);font-size:13px}
+.mini-slot input{width:auto;margin:0}
+.mini-slot .ms-main{flex:1;line-height:1.4}
+.ms-status{font-size:11px;padding:2px 6px;border-radius:6px;font-weight:600}
+.ms-status.free{background:var(--primary-light);color:var(--primary)}
+.ms-status.taken{background:#F3E7D9;color:var(--warn)}
+.hint{font-size:12px;color:var(--text-light);line-height:1.6;margin-bottom:10px}
+.result-box{font-size:12px;line-height:1.7;color:var(--text-light);margin-top:10px;
+  padding:10px;background:var(--bg);border-radius:8px;max-height:160px;overflow:auto}
 </style>
 </head>
 <body>
@@ -104,9 +134,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     <h1 id="pageTitle"></h1>
     <p id="pageSubtitle"></p>
   </div>
+  <a class="navlink" href="./courses.html" id="navLink">想報名 <b>課程／工作坊</b>？點這裡 →</a>
   <div id="adminArea"></div>
   <div id="app">
-    <div class="loading"><div class="spinner"></div><div>載入可預約時段中...</div></div>
+    <div class="loading"><div class="spinner"></div><div>載入中...</div></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -120,133 +151,359 @@ const DEFAULTS = {
   subtitle: '選擇適合你的時間，點擊確認即可完成預約',
   sessionMinutes: 60,
   timeStepMinutes: 30,
+  minLeadMinutes: 60,
+  cancelCutoffHours: 24,
   apiBase: 'https://booking-worker.iocloudy.workers.dev',
 };
 // ════════════════════════════════════════
 
-// 從 Worker 載入設定，載不到就用預設值
 let CONFIG = { ...DEFAULTS };
+const API = DEFAULTS.apiBase;
 
 const urlParams = new URLSearchParams(window.location.search);
-const isAdmin = urlParams.get('admin') === '1';
-
-async function loadConfig() {
-  try {
-    const res = await fetch(`${DEFAULTS.apiBase}/api/config`);
-    if (res.ok) {
-      const saved = await res.json();
-      CONFIG = { ...DEFAULTS, ...saved };
-    }
-  } catch (e) { /* 用預設值 */ }
-  applyConfig();
-}
-
-function applyConfig() {
-  document.getElementById('pageTitle').textContent = CONFIG.title;
-  document.getElementById('pageSubtitle').textContent = CONFIG.subtitle;
-  document.title = CONFIG.title;
-}
-
-// ── 管理模式 ──
-function renderAdmin() {
-  if (!isAdmin) return;
-  document.getElementById('adminArea').innerHTML = `
-    <div class="admin-bar">
-      <span class="admin-badge">管理模式</span>
-      <div class="field">
-        <label>頁面標題</label>
-        <input type="text" id="adminTitle" value="${CONFIG.title}" placeholder="輸入標題">
-      </div>
-      <div class="field">
-        <label>副標題</label>
-        <input type="text" id="adminSubtitle" value="${CONFIG.subtitle}" placeholder="輸入副標題">
-      </div>
-      <div class="field">
-        <label>每次時長（分鐘）</label>
-        <input type="number" id="adminSession" value="${CONFIG.sessionMinutes}" min="15" max="180" style="width:100px">
-      </div>
-      <button class="btn btn-primary btn-small" onclick="saveConfig()">儲存設定</button>
-    </div>`;
-}
-
-async function saveConfig() {
-  const title = document.getElementById('adminTitle').value.trim();
-  const subtitle = document.getElementById('adminSubtitle').value.trim();
-  const sessionMinutes = parseInt(document.getElementById('adminSession').value) || 60;
-
-  try {
-    const res = await fetch(`${DEFAULTS.apiBase}/api/config`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, subtitle, sessionMinutes }),
-    });
-    if (res.ok) {
-      CONFIG.title = title;
-      CONFIG.subtitle = subtitle;
-      CONFIG.sessionMinutes = sessionMinutes;
-      applyConfig();
-      showToast('設定已儲存', 'success');
-    } else {
-      showToast('儲存失敗', 'error');
-    }
-  } catch (e) {
-    showToast('網路錯誤', 'error');
-  }
-}
-
-// ── 以下為預約功能 ──
-
-let slots = [];
-let selectedSlotId = null;
-let selectedTime = null;
+const isAdminUrl = urlParams.get('admin') === '1';
+const cancelToken = urlParams.get('cancel');
 
 const WEEKDAYS = ['日','一','二','三','四','五','六'];
 
-function formatDate(iso) {
-  const d = new Date(iso);
-  return `${d.getMonth()+1}月${d.getDate()}日`;
-}
-function formatWeekday(iso) {
-  return `週${WEEKDAYS[new Date(iso).getDay()]}`;
-}
-function formatTime(iso) {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-function dateKey(iso) { return iso.slice(0, 10); }
+function pad(n){return String(n).padStart(2,'0')}
+function formatDate(iso){const d=new Date(iso);return `${d.getMonth()+1}月${d.getDate()}日`}
+function formatWeekday(iso){return `週${WEEKDAYS[new Date(iso).getDay()]}`}
+function formatTime(iso){const d=new Date(iso);return `${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function dateKey(iso){const d=new Date(iso);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3200);
 }
+
+// ════════════════════════════════════════
+// 設定載入
+// ════════════════════════════════════════
+async function loadConfig() {
+  try {
+    const res = await fetch(`${API}/api/config`);
+    if (res.ok) CONFIG = { ...DEFAULTS, ...(await res.json()) };
+  } catch (e) { /* 用預設值 */ }
+  document.getElementById('pageTitle').textContent = CONFIG.title;
+  document.getElementById('pageSubtitle').textContent = CONFIG.subtitle;
+  document.title = CONFIG.title;
+}
+
+// ════════════════════════════════════════
+// 【優化 2】管理模式 — 密碼保護
+// ════════════════════════════════════════
+let adminPw = sessionStorage.getItem('booking_admin_pw') || '';
+let adminTab = 'config';
+let adminSlots = [];
+let batchWeekdays = [];
+
+function adminHeaders() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Password': adminPw };
+}
+
+function renderAdminLogin(errMsg) {
+  document.getElementById('adminArea').innerHTML = `
+    <div class="admin-bar">
+      <span class="admin-badge">管理模式</span>
+      <div class="field">
+        <label>管理密碼</label>
+        <input type="password" id="adminPwInput" placeholder="請輸入密碼"
+          onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      ${errMsg ? `<div class="hint" style="color:var(--error)">${esc(errMsg)}</div>` : ''}
+      <button class="btn btn-primary btn-small" onclick="adminLogin()">進入管理</button>
+    </div>`;
+}
+
+async function adminLogin() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (!pw) { showToast('請輸入密碼', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: { 'Content-Type':'application/json','X-Admin-Password': pw } });
+    const data = await res.json();
+    if (data.ok) {
+      adminPw = pw;
+      sessionStorage.setItem('booking_admin_pw', pw);
+      renderAdmin();
+      loadAdminSlots();
+    } else {
+      renderAdminLogin(data.error || '密碼錯誤');
+    }
+  } catch (e) {
+    renderAdminLogin('無法連線到伺服器');
+  }
+}
+
+function adminLogout() {
+  adminPw = '';
+  sessionStorage.removeItem('booking_admin_pw');
+  renderAdminLogin();
+}
+
+async function initAdmin() {
+  if (!isAdminUrl) return;
+  if (!adminPw) { renderAdminLogin(); return; }
+  // 用存的密碼靜默驗證一次
+  try {
+    const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: adminHeaders() });
+    const data = await res.json();
+    if (data.ok) { renderAdmin(); loadAdminSlots(); }
+    else { adminPw = ''; sessionStorage.removeItem('booking_admin_pw'); renderAdminLogin(data.error); }
+  } catch (e) { renderAdminLogin('無法連線到伺服器'); }
+}
+
+function renderAdmin() {
+  const today = new Date();
+  const in30 = new Date(today.getTime() + 30 * 86400000);
+  const d2s = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+  document.getElementById('adminArea').innerHTML = `
+    <div class="admin-bar">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="admin-badge">管理模式</span>
+        <span style="font-size:12px;color:var(--text-light);cursor:pointer" onclick="adminLogout()">登出</span>
+      </div>
+      <div class="admin-tabs">
+        <div class="admin-tab ${adminTab==='config'?'active':''}" onclick="switchTab('config')">頁面設定</div>
+        <div class="admin-tab ${adminTab==='batch'?'active':''}" onclick="switchTab('batch')">批次開時段</div>
+        <div class="admin-tab ${adminTab==='list'?'active':''}" onclick="switchTab('list')">時段管理</div>
+      </div>
+
+      <!-- 頁面設定 -->
+      <div class="admin-panel ${adminTab==='config'?'active':''}" id="panel-config">
+        <div class="field">
+          <label>頁面標題</label>
+          <input type="text" id="cfgTitle" value="${esc(CONFIG.title)}">
+        </div>
+        <div class="field">
+          <label>副標題</label>
+          <input type="text" id="cfgSubtitle" value="${esc(CONFIG.subtitle)}">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>每次時長（分）</label>
+            <input type="number" id="cfgSession" value="${CONFIG.sessionMinutes}" min="15" max="240">
+          </div>
+          <div class="field">
+            <label>時間間隔（分）</label>
+            <input type="number" id="cfgStep" value="${CONFIG.timeStepMinutes}" min="5" max="120">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>最少提前（分）</label>
+            <input type="number" id="cfgLead" value="${CONFIG.minLeadMinutes}" min="0" max="10080">
+          </div>
+          <div class="field">
+            <label>取消截止（小時前）</label>
+            <input type="number" id="cfgCutoff" value="${CONFIG.cancelCutoffHours}" min="0" max="168">
+          </div>
+        </div>
+        <div class="hint">「最少提前」避免學員在會談前 10 分鐘才預約；「取消截止」之後學員就只能私訊你改。</div>
+        <button class="btn btn-primary btn-small" onclick="saveConfig()">儲存設定</button>
+      </div>
+
+      <!-- 批次開時段 -->
+      <div class="admin-panel ${adminTab==='batch'?'active':''}" id="panel-batch">
+        <div class="field">
+          <label>時段名稱</label>
+          <input type="text" id="bName" value="陪談" placeholder="例如：陪談">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>開始日期</label>
+            <input type="date" id="bStartDate" value="${d2s(today)}">
+          </div>
+          <div class="field">
+            <label>結束日期</label>
+            <input type="date" id="bEndDate" value="${d2s(in30)}">
+          </div>
+        </div>
+        <label style="font-size:12px;font-weight:500;color:var(--text-light);display:block;margin-bottom:6px">星期（可複選）</label>
+        <div class="wd-grid" id="wdGrid">
+          ${WEEKDAYS.map((w,i)=>`<div class="wd${batchWeekdays.includes(i)?' on':''}" data-wd="${i}" onclick="toggleWd(${i})">${w}</div>`).join('')}
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>開始時間</label>
+            <input type="time" id="bStartTime" value="19:00" step="1800">
+          </div>
+          <div class="field">
+            <label>結束時間</label>
+            <input type="time" id="bEndTime" value="21:00" step="1800">
+          </div>
+        </div>
+        <div class="hint">若開始 19:00、結束 21:00 且每次 ${CONFIG.sessionMinutes} 分鐘，學員可在這段區間內自選時間。一次最多 60 個時段。</div>
+        <button class="btn btn-primary btn-small" onclick="runBatch()" id="batchBtn">產生時段</button>
+        <div id="batchResult"></div>
+      </div>
+
+      <!-- 時段管理 -->
+      <div class="admin-panel ${adminTab==='list'?'active':''}" id="panel-list">
+        <div class="hint">列出所有未過期的時段。勾選後可刪除（Notion 內會封存，不會真的消失）。</div>
+        <div id="slotList"><div class="hint">載入中...</div></div>
+        <div class="row2" style="margin-top:10px">
+          <button class="btn btn-ghost btn-small" style="flex:1" onclick="loadAdminSlots()">重新整理</button>
+          <button class="btn btn-danger btn-small" style="flex:1" onclick="deleteChecked()">刪除勾選</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function switchTab(t) { adminTab = t; renderAdmin(); if (t === 'list') loadAdminSlots(); }
+
+function toggleWd(i) {
+  const idx = batchWeekdays.indexOf(i);
+  if (idx >= 0) batchWeekdays.splice(idx, 1); else batchWeekdays.push(i);
+  document.querySelector(`.wd[data-wd="${i}"]`).classList.toggle('on');
+}
+
+async function saveConfig() {
+  const payload = {
+    title: document.getElementById('cfgTitle').value.trim(),
+    subtitle: document.getElementById('cfgSubtitle').value.trim(),
+    sessionMinutes: parseInt(document.getElementById('cfgSession').value) || 60,
+    timeStepMinutes: parseInt(document.getElementById('cfgStep').value) || 30,
+    minLeadMinutes: parseInt(document.getElementById('cfgLead').value) || 0,
+    cancelCutoffHours: parseInt(document.getElementById('cfgCutoff').value) || 0,
+  };
+  try {
+    const res = await fetch(`${API}/api/config`, { method: 'POST', headers: adminHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.ok) {
+      CONFIG = { ...CONFIG, ...data.config };
+      document.getElementById('pageTitle').textContent = CONFIG.title;
+      document.getElementById('pageSubtitle').textContent = CONFIG.subtitle;
+      document.title = CONFIG.title;
+      showToast('設定已儲存', 'success');
+      loadSlots();
+    } else {
+      showToast(data.error || '儲存失敗', 'error');
+    }
+  } catch (e) { showToast('網路錯誤', 'error'); }
+}
+
+async function runBatch() {
+  if (!batchWeekdays.length) { showToast('請至少選一個星期', 'error'); return; }
+  const btn = document.getElementById('batchBtn');
+  btn.disabled = true; btn.textContent = '產生中...';
+  const payload = {
+    name: document.getElementById('bName').value.trim() || '陪談',
+    startDate: document.getElementById('bStartDate').value,
+    endDate: document.getElementById('bEndDate').value,
+    weekdays: batchWeekdays.slice(),
+    startTime: document.getElementById('bStartTime').value,
+    endTime: document.getElementById('bEndTime').value,
+  };
+  try {
+    const res = await fetch(`${API}/api/admin/slots/batch`, { method: 'POST', headers: adminHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    const box = document.getElementById('batchResult');
+    if (data.ok) {
+      box.innerHTML = `<div class="result-box">
+        <strong style="color:var(--success)">已建立 ${data.created.length} 個時段</strong><br>
+        ${data.created.join('、')}
+        ${data.failed.length ? `<br><br><strong style="color:var(--error)">失敗 ${data.failed.length} 個</strong><br>${data.failed.map(esc).join('<br>')}` : ''}
+      </div>`;
+      showToast(`已建立 ${data.created.length} 個時段`, 'success');
+      loadSlots();
+    } else {
+      box.innerHTML = `<div class="result-box" style="color:var(--error)">${esc(data.error)}</div>`;
+    }
+  } catch (e) { showToast('網路錯誤', 'error'); }
+  btn.disabled = false; btn.textContent = '產生時段';
+}
+
+async function loadAdminSlots() {
+  const box = document.getElementById('slotList');
+  if (!box) return;
+  try {
+    const res = await fetch(`${API}/api/admin/slots`, { headers: adminHeaders() });
+    const data = await res.json();
+    adminSlots = data.slots || [];
+    if (!adminSlots.length) { box.innerHTML = '<div class="hint">目前沒有未過期的時段。</div>'; return; }
+    box.innerHTML = adminSlots.map(s => {
+      const taken = s.status === '已預約';
+      return `<label class="mini-slot">
+        <input type="checkbox" class="slot-cb" value="${s.id}">
+        <span class="ms-main">
+          ${formatDate(s.start)} ${formatWeekday(s.start)} ${formatTime(s.start)}${s.end?' – '+formatTime(s.end):''}
+          <br><span style="color:var(--text-light)">${esc(s.name)}${taken && s.studentName ? ' · '+esc(s.studentName) : ''}</span>
+        </span>
+        <span class="ms-status ${taken?'taken':'free'}">${taken?'已預約':'可預約'}</span>
+      </label>`;
+    }).join('');
+  } catch (e) {
+    box.innerHTML = '<div class="hint" style="color:var(--error)">載入失敗</div>';
+  }
+}
+
+async function deleteChecked() {
+  const ids = [...document.querySelectorAll('.slot-cb:checked')].map(c => c.value);
+  if (!ids.length) { showToast('請先勾選要刪除的時段', 'error'); return; }
+  const anyTaken = adminSlots.filter(s => ids.includes(s.id) && s.status === '已預約');
+  const warn = anyTaken.length ? `\n\n注意：其中 ${anyTaken.length} 個已被預約，刪除後行事曆事件不會自動移除。` : '';
+  if (!confirm(`確定刪除 ${ids.length} 個時段？${warn}`)) return;
+  try {
+    const res = await fetch(`${API}/api/admin/slots/delete`, { method: 'POST', headers: adminHeaders(), body: JSON.stringify({ ids }) });
+    const data = await res.json();
+    if (data.ok) { showToast(`已刪除 ${data.deleted} 個時段`, 'success'); loadAdminSlots(); loadSlots(); }
+    else showToast(data.error || '刪除失敗', 'error');
+  } catch (e) { showToast('網路錯誤', 'error'); }
+}
+
+// ════════════════════════════════════════
+// 預約主流程
+// ════════════════════════════════════════
+let slots = [];
+let selectedSlotId = null;
+let selectedTime = null;
+let lastResult = null;
+
+function leadCutoff() { return Date.now() + CONFIG.minLeadMinutes * 60000; }
 
 function isRangeSlot(slot) {
-  if (!slot.end) return false;
-  const diff = new Date(slot.end) - new Date(slot.start);
-  return diff > CONFIG.sessionMinutes * 60 * 1000;
+  if (!slot || !slot.end) return false;
+  return new Date(slot.end) - new Date(slot.start) > CONFIG.sessionMinutes * 60000;
 }
 
+// 【優化 1】只產生「還沒過去」且塞得下一場的時間選項
 function generateTimeOptions(slot) {
   const options = [];
-  const start = new Date(slot.start);
-  const end = new Date(slot.end);
-  const sessionMs = CONFIG.sessionMinutes * 60 * 1000;
-  const stepMs = CONFIG.timeStepMinutes * 60 * 1000;
-  let cursor = new Date(start);
-  while (cursor.getTime() + sessionMs <= end.getTime()) {
+  const sessionMs = CONFIG.sessionMinutes * 60000;
+  const stepMs = CONFIG.timeStepMinutes * 60000;
+  const end = new Date(slot.end).getTime();
+  const cutoff = leadCutoff();
+  let cursor = new Date(slot.start).getTime();
+  // 對齊到 step，跳過已過去的
+  while (cursor < cutoff) cursor += stepMs;
+  let guard = 0;
+  while (cursor + sessionMs <= end && guard++ < 100) {
     options.push(new Date(cursor));
-    cursor = new Date(cursor.getTime() + stepMs);
+    cursor += stepMs;
   }
   return options;
 }
 
+function bookableSlots(list) {
+  const cutoff = leadCutoff();
+  const sessionMs = CONFIG.sessionMinutes * 60000;
+  return list.filter(s => {
+    const st = new Date(s.start).getTime();
+    const en = s.end ? new Date(s.end).getTime() : st + sessionMs;
+    return en - Math.max(st, cutoff) >= sessionMs;
+  });
+}
+
 async function loadSlots() {
   try {
-    const res = await fetch(`${CONFIG.apiBase}/api/slots`);
+    const res = await fetch(`${API}/api/slots`);
     const data = await res.json();
-    slots = data.slots || [];
+    slots = bookableSlots(data.slots || []);
     render();
   } catch (e) {
     document.getElementById('app').innerHTML =
@@ -257,20 +514,16 @@ async function loadSlots() {
 function render() {
   const app = document.getElementById('app');
 
-  if (slots.length === 0) {
+  if (!slots.length) {
     app.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div>目前沒有可預約的時段<br>請稍後再查看</div></div>';
     return;
   }
 
   const groups = {};
-  slots.forEach(s => {
-    const key = dateKey(s.start);
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(s);
-  });
+  slots.forEach(s => { (groups[dateKey(s.start)] ||= []).push(s); });
 
   let html = '';
-  for (const [key, items] of Object.entries(groups)) {
+  for (const items of Object.values(groups)) {
     const sample = items[0].start;
     html += `<div class="date-group">
       <div class="date-label">${formatDate(sample)} <span class="weekday">${formatWeekday(sample)}</span></div>`;
@@ -279,13 +532,14 @@ function render() {
       const sel = s.id === selectedSlotId ? ' selected' : '';
       const range = isRangeSlot(s);
       const startT = formatTime(s.start);
-      const endT = s.end ? formatTime(s.end) : formatTime(new Date(new Date(s.start).getTime() + CONFIG.sessionMinutes*60000).toISOString());
+      const endT = s.end ? formatTime(s.end)
+        : formatTime(new Date(new Date(s.start).getTime() + CONFIG.sessionMinutes*60000).toISOString());
 
       html += `<div class="slot${sel}" onclick="selectSlot('${s.id}')">
         <div class="slot-header">
           <div>
             <div class="slot-time">${startT} – ${endT}</div>
-            ${s.name ? `<div class="slot-name">${s.name}</div>` : ''}
+            ${s.name ? `<div class="slot-name">${esc(s.name)}</div>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             ${range ? '<span class="slot-tag">可選時間</span>' : ''}
@@ -298,6 +552,9 @@ function render() {
         html += `<div class="time-picker">
           <div class="time-picker-label">選擇你希望的時間（每次 ${CONFIG.sessionMinutes} 分鐘）</div>
           <div class="time-options">`;
+        if (!options.length) {
+          html += '<div class="hint">這個區間已經沒有可預約的時間了</div>';
+        }
         options.forEach(opt => {
           const optISO = opt.toISOString();
           const optEnd = new Date(opt.getTime() + CONFIG.sessionMinutes*60000);
@@ -322,7 +579,7 @@ function render() {
     </div>
     <div class="field">
       <label>備註（選填）</label>
-      <textarea id="notes" placeholder="想聊的主題或其他備註"></textarea>
+      <textarea id="notes" placeholder="想聊的主題或其他備註" maxlength="1000"></textarea>
     </div>
     <button class="btn btn-primary" id="submitBtn" onclick="submitBooking()">確認預約</button>
   </div>`;
@@ -331,9 +588,8 @@ function render() {
 }
 
 function selectSlot(id) {
-  if (selectedSlotId === id) {
-    selectedSlotId = null; selectedTime = null;
-  } else {
+  if (selectedSlotId === id) { selectedSlotId = null; selectedTime = null; }
+  else {
     selectedSlotId = id; selectedTime = null;
     const slot = slots.find(s => s.id === id);
     if (!isRangeSlot(slot)) selectedTime = slot.start;
@@ -341,10 +597,7 @@ function selectSlot(id) {
   render();
 }
 
-function pickTime(isoTime) {
-  selectedTime = isoTime;
-  render();
-}
+function pickTime(isoTime) { selectedTime = isoTime; render(); }
 
 async function submitBooking() {
   const name = document.getElementById('studentName').value.trim();
@@ -357,17 +610,19 @@ async function submitBooking() {
   const chosenEnd = new Date(new Date(selectedTime).getTime() + CONFIG.sessionMinutes * 60000).toISOString();
 
   try {
-    const res = await fetch(`${CONFIG.apiBase}/api/book`, {
+    const res = await fetch(`${API}/api/book`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slotId: selectedSlotId, studentName: name, notes, chosenStart: selectedTime, chosenEnd }),
     });
     const data = await res.json();
     if (data.ok) {
-      showSuccessScreen(name);
+      lastResult = data;
+      showSuccessScreen(name, data);
     } else {
       showToast(data.error || '預約失敗，請重試', 'error');
       btn.disabled = false; btn.textContent = '確認預約';
+      selectedSlotId = null; selectedTime = null;
       loadSlots();
     }
   } catch (e) {
@@ -376,27 +631,132 @@ async function submitBooking() {
   }
 }
 
-function showSuccessScreen(name) {
+// 【優化 4】成功畫面附上取消連結
+function showSuccessScreen(name, data) {
   const slot = slots.find(s => s.id === selectedSlotId);
   const startDate = slot ? `${formatDate(slot.start)} ${formatWeekday(slot.start)}` : '';
   const startTime = selectedTime ? formatTime(selectedTime) : '';
-  const endTime = selectedTime ? formatTime(new Date(new Date(selectedTime).getTime() + CONFIG.sessionMinutes*60000).toISOString()) : '';
+  const endTime = selectedTime
+    ? formatTime(new Date(new Date(selectedTime).getTime() + CONFIG.sessionMinutes*60000).toISOString()) : '';
+  const cancelUrl = data.cancelUrl || `${location.origin}${location.pathname}?cancel=${data.cancelToken}`;
+
+  document.getElementById('adminArea').innerHTML = '';
+  const nav = document.getElementById('navLink');
+  if (nav) nav.style.display = 'none';
   document.getElementById('app').innerHTML = `<div class="success-screen">
     <div class="success-icon">✅</div>
     <h2>預約成功！</h2>
     <p>你的時段已確認，期待與你的會面</p>
     <div class="success-detail">
-      <strong>預約人：</strong>${name}<br>
+      <strong>預約人：</strong>${esc(name)}<br>
       <strong>日期：</strong>${startDate}<br>
       <strong>時間：</strong>${startTime} – ${endTime}
-      ${slot?.name ? `<br><strong>主題：</strong>${slot.name}` : ''}
+      ${slot && slot.name ? `<br><strong>主題：</strong>${esc(slot.name)}` : ''}
+    </div>
+    <div class="cancel-note">
+      <strong style="color:var(--text)">需要取消或改期？</strong><br>
+      請保存以下連結（建議截圖或加到書籤）。會談前 ${data.cancelCutoffHours || CONFIG.cancelCutoffHours} 小時之前都可以自行取消：<br>
+      <a href="${esc(cancelUrl)}">${esc(cancelUrl)}</a>
+      <br><br>
+      <button class="btn btn-ghost btn-small" style="width:100%" onclick="copyCancel('${esc(cancelUrl)}')">複製取消連結</button>
     </div>
   </div>`;
 }
 
-// ── 啟動 ──
+function copyCancel(url) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(
+      () => showToast('已複製取消連結', 'success'),
+      () => showToast('複製失敗，請長按連結手動複製', 'error')
+    );
+  } else {
+    showToast('請長按連結手動複製', 'error');
+  }
+}
+
+// ════════════════════════════════════════
+// 【優化 4】取消頁面
+// ════════════════════════════════════════
+async function renderCancelPage() {
+  document.getElementById('pageTitle').textContent = '取消預約';
+  document.getElementById('pageSubtitle').textContent = '';
+  const navEl = document.getElementById('navLink');
+  if (navEl) navEl.style.display = 'none';
+  document.title = '取消預約';
+  const app = document.getElementById('app');
+  try {
+    const res = await fetch(`${API}/api/cancel?token=${encodeURIComponent(cancelToken)}`);
+    const data = await res.json();
+    if (!data.ok) {
+      app.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><div>${esc(data.error)}</div></div>`;
+      return;
+    }
+    const b = data.booking;
+    const detail = `<div class="success-detail">
+      <strong>預約人：</strong>${esc(b.studentName)}<br>
+      <strong>日期：</strong>${formatDate(b.start)} ${formatWeekday(b.start)}<br>
+      <strong>時間：</strong>${formatTime(b.start)} – ${formatTime(b.end)}
+      ${b.slotName ? `<br><strong>主題：</strong>${esc(b.slotName)}` : ''}
+    </div>`;
+
+    if (b.cancelled) {
+      app.innerHTML = `<div class="success-screen"><div class="success-icon">🗑️</div>
+        <h2>此預約已取消</h2><p>時段已釋出給其他人</p>${detail}</div>`;
+      return;
+    }
+    if (!data.canCancel) {
+      app.innerHTML = `<div class="success-screen"><div class="success-icon">⏰</div>
+        <h2>已超過可取消時間</h2>
+        <p>會談前 ${data.cutoffHours} 小時內無法自行取消<br>請直接聯繫老師</p>${detail}</div>`;
+      return;
+    }
+    app.innerHTML = `<div class="form-section">
+      <div class="form-title">確認取消這筆預約？</div>
+      ${detail}
+      <div class="hint" style="margin-top:14px">取消後時段會立刻釋出，行事曆事件也會一併移除。此動作無法復原。</div>
+      <button class="btn btn-danger" id="cancelBtn" onclick="doCancel()">確認取消預約</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-ghost" onclick="location.href=location.pathname">返回預約頁</button>
+    </div>`;
+  } catch (e) {
+    app.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div>無法連線，請稍後再試</div></div>';
+  }
+}
+
+async function doCancel() {
+  if (!confirm('確定要取消這筆預約嗎？此動作無法復原。')) return;
+  const btn = document.getElementById('cancelBtn');
+  btn.disabled = true; btn.textContent = '取消中...';
+  try {
+    const res = await fetch(`${API}/api/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: cancelToken }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('app').innerHTML = `<div class="success-screen">
+        <div class="success-icon">✅</div><h2>已取消預約</h2>
+        <p>時段已釋出，如需重新預約請回到預約頁</p>
+        <div style="height:20px"></div>
+        <button class="btn btn-primary" onclick="location.href=location.pathname">重新預約</button>
+      </div>`;
+    } else {
+      showToast(data.error || '取消失敗', 'error');
+      btn.disabled = false; btn.textContent = '確認取消預約';
+    }
+  } catch (e) {
+    showToast('網路錯誤，請稍後再試', 'error');
+    btn.disabled = false; btn.textContent = '確認取消預約';
+  }
+}
+
+// ════════════════════════════════════════
+// 啟動
+// ════════════════════════════════════════
 loadConfig().then(() => {
-  renderAdmin();
+  if (cancelToken) { renderCancelPage(); return; }
+  initAdmin();
   loadSlots();
 });
 </script>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>課程報名</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F7F5F2;--card:#fff;--primary:#5B7B6F;--primary-light:#E8F0EC;
+  --accent:#8A6E52;--accent-light:#F2EBE2;
+  --text:#2C3E35;--text-light:#7A8A80;--border:#E4DDD6;
+  --success:#4A8B6E;--error:#C85454;--warn:#B8863B;--radius:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.container{max-width:480px;margin:0 auto;padding:20px 16px}
+.header{text-align:center;padding:28px 0 16px}
+.header h1{font-size:22px;font-weight:700;letter-spacing:0.5px;color:var(--accent)}
+.header p{font-size:14px;color:var(--text-light);margin-top:6px}
+
+.navlink{display:block;text-align:center;font-size:13px;color:var(--text-light);
+  text-decoration:none;padding:10px;margin-bottom:16px;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--card)}
+.navlink b{color:var(--primary)}
+
+.course{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
+  padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.course:active{transform:scale(0.99)}
+.course.selected{border-color:var(--accent);background:var(--accent-light)}
+.course.full{opacity:.6;cursor:not-allowed}
+.course-name{font-size:17px;font-weight:700;line-height:1.4}
+.course-meta{font-size:13px;color:var(--text-light);margin-top:8px;line-height:1.7}
+.course-meta .ico{display:inline-block;width:18px}
+.course-desc{font-size:13px;color:var(--text);margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--border);line-height:1.7;white-space:pre-wrap}
+.cap-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cap-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.cap-fill{height:100%;background:var(--accent);transition:width .3s}
+.cap-fill.warn{background:var(--warn)}
+.cap-fill.full{background:var(--error)}
+.cap-text{font-size:12px;font-weight:600;color:var(--text-light);white-space:nowrap}
+.badge-full{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+  background:var(--error);padding:2px 8px;border-radius:6px;margin-left:6px}
+.badge-few{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+  background:var(--warn);padding:2px 8px;border-radius:6px;margin-left:6px}
+
+.form-section{background:var(--card);border-radius:var(--radius);
+  padding:20px 16px;margin-top:16px;border:1px solid var(--border)}
+.form-section.hidden{display:none}
+.form-title{font-size:15px;font-weight:600;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{font-size:13px;font-weight:500;color:var(--text-light);display:block;margin-bottom:6px}
+.field input,.field textarea,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);
+  border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border .2s;
+  background:var(--bg);color:var(--text)}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:60px}
+.required::after{content:' *';color:var(--error)}
+.btn{width:100%;padding:14px;border:none;border-radius:var(--radius);
+  font-size:16px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:active{background:#755C44}
+.btn-primary:disabled{background:var(--border);color:var(--text-light);cursor:not-allowed}
+.btn-danger{background:var(--error);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-light);border:1.5px solid var(--border)}
+
+.loading{text-align:center;padding:60px 0;color:var(--text-light);font-size:14px}
+.loading .spinner{width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:60px 20px;color:var(--text-light)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.toast{position:fixed;top:0;left:0;right:0;padding:16px;text-align:center;
+  font-size:14px;font-weight:600;z-index:100;transition:transform .3s;transform:translateY(-100%)}
+.toast.show{transform:translateY(0)}
+.toast.success{background:var(--success);color:#fff}
+.toast.error{background:var(--error);color:#fff}
+
+.success-screen{text-align:center;padding:60px 20px}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-screen h2{font-size:20px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.success-screen p{font-size:14px;color:var(--text-light);line-height:1.6}
+.success-detail{background:var(--accent-light);border-radius:var(--radius);
+  padding:16px;margin-top:20px;text-align:left;font-size:14px;line-height:1.8}
+.success-detail strong{color:var(--accent)}
+.cancel-note{margin-top:18px;padding:14px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);font-size:13px;color:var(--text-light);text-align:left;line-height:1.7}
+.cancel-note a{color:var(--accent);word-break:break-all}
+
+/* 管理模式 */
+.admin-bar{background:var(--card);border:2px dashed var(--accent);border-radius:var(--radius);
+  padding:16px;margin-bottom:20px}
+.admin-badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;
+  background:var(--accent);padding:2px 8px;border-radius:6px;margin-bottom:12px}
+.admin-bar .field{margin-bottom:10px}
+.admin-bar .field label{font-size:12px}
+.admin-bar .field input,.admin-bar .field textarea{font-size:14px;padding:8px 10px}
+.btn-small{padding:10px 16px;font-size:14px;border-radius:8px;width:auto}
+.admin-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.admin-tab{padding:8px 12px;font-size:13px;font-weight:600;color:var(--text-light);
+  cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.admin-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.admin-panel{display:none}
+.admin-panel.active{display:block}
+.row2{display:flex;gap:10px}
+.row2 .field{flex:1}
+.mini{padding:10px;border:1px solid var(--border);border-radius:8px;
+  margin-bottom:8px;background:var(--bg);font-size:13px;line-height:1.5}
+.mini-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.mini-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.mini-actions button{padding:6px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border);
+  background:var(--card);cursor:pointer;color:var(--text)}
+.ms-status{font-size:11px;padding:2px 6px;border-radius:6px;font-weight:600;white-space:nowrap}
+.ms-status.open{background:var(--primary-light);color:var(--primary)}
+.ms-status.closed{background:#F3E7D9;color:var(--warn)}
+.ms-status.past{background:var(--border);color:var(--text-light)}
+.hint{font-size:12px;color:var(--text-light);line-height:1.6;margin-bottom:10px}
+.roster{margin-top:8px;padding:10px;background:var(--card);border-radius:6px;
+  font-size:12px;line-height:1.8;max-height:220px;overflow:auto}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px;color:var(--text-light)}
+.chk input{width:auto}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1 id="pageTitle">課程報名</h1>
+    <p id="pageSubtitle">選擇想參加的課程，填寫資料即可完成報名</p>
+  </div>
+  <a class="navlink" href="./" id="navLink">想預約 <b>1 對 1 陪談</b> 時段？點這裡 →</a>
+  <div id="adminArea"></div>
+  <div id="app">
+    <div class="loading"><div class="spinner"></div><div>載入中...</div></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://booking-worker.iocloudy.workers.dev';
+let CONFIG = { cancelCutoffHours: 24 };
+
+const urlParams = new URLSearchParams(window.location.search);
+const isAdminUrl = urlParams.get('admin') === '1';
+const cancelToken = urlParams.get('cancel');
+
+const WEEKDAYS = ['日','一','二','三','四','五','六'];
+function pad(n){return String(n).padStart(2,'0')}
+function fDate(iso){const d=new Date(iso);return `${d.getMonth()+1}月${d.getDate()}日`}
+function fWeek(iso){return `週${WEEKDAYS[new Date(iso).getDay()]}`}
+function fTime(iso){const d=new Date(iso);return `${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch(`${API}/api/config`);
+    if (res.ok) CONFIG = { ...CONFIG, ...(await res.json()) };
+  } catch (e) {}
+}
+
+// ════════════════════════════════════════
+// 管理模式
+// ════════════════════════════════════════
+let adminPw = sessionStorage.getItem('booking_admin_pw') || '';
+let adminTab = 'create';
+let adminCourses = [];
+let openRoster = null;
+
+function adminHeaders() {
+  return { 'Content-Type': 'application/json', 'X-Admin-Password': adminPw };
+}
+
+function renderAdminLogin(errMsg) {
+  document.getElementById('adminArea').innerHTML = `
+    <div class="admin-bar">
+      <span class="admin-badge">管理模式</span>
+      <div class="field">
+        <label>管理密碼</label>
+        <input type="password" id="adminPwInput" placeholder="請輸入密碼"
+          onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      ${errMsg ? `<div class="hint" style="color:var(--error)">${esc(errMsg)}</div>` : ''}
+      <button class="btn btn-primary btn-small" onclick="adminLogin()">進入管理</button>
+    </div>`;
+}
+
+async function adminLogin() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (!pw) { showToast('請輸入密碼', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/api/admin/verify`, {
+      method: 'POST', headers: { 'Content-Type':'application/json', 'X-Admin-Password': pw } });
+    const data = await res.json();
+    if (data.ok) {
+      adminPw = pw; sessionStorage.setItem('booking_admin_pw', pw);
+      renderAdmin(); loadAdminCourses();
+    } else renderAdminLogin(data.error || '密碼錯誤');
+  } catch (e) { renderAdminLogin('無法連線到伺服器'); }
+}
+
+function adminLogout() {
+  adminPw = ''; sessionStorage.removeItem('booking_admin_pw'); renderAdminLogin();
+}
+
+async function initAdmin() {
+  if (!isAdminUrl) return;
+  if (!adminPw) { renderAdminLogin(); return; }
+  try {
+    const res = await fetch(`${API}/api/admin/verify`, { method: 'POST', headers: adminHeaders() });
+    const data = await res.json();
+    if (data.ok) { renderAdmin(); loadAdminCourses(); }
+    else { adminPw=''; sessionStorage.removeItem('booking_admin_pw'); renderAdminLogin(data.error); }
+  } catch (e) { renderAdminLogin('無法連線到伺服器'); }
+}
+
+function renderAdmin() {
+  const today = new Date();
+  const d2s = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  document.getElementById('adminArea').innerHTML = `
+    <div class="admin-bar">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="admin-badge">管理模式</span>
+        <span style="font-size:12px;color:var(--text-light);cursor:pointer" onclick="adminLogout()">登出</span>
+      </div>
+      <div class="admin-tabs">
+        <div class="admin-tab ${adminTab==='create'?'active':''}" onclick="switchTab('create')">開新課程</div>
+        <div class="admin-tab ${adminTab==='manage'?'active':''}" onclick="switchTab('manage')">課程與名單</div>
+      </div>
+
+      <div class="admin-panel ${adminTab==='create'?'active':''}">
+        <div class="field">
+          <label class="required">課程名稱</label>
+          <input type="text" id="cName" placeholder="例如：人際關係之高效能溝通工作坊">
+        </div>
+        <div class="field">
+          <label class="required">日期</label>
+          <input type="date" id="cDate" value="${d2s(today)}">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label class="required">開始時間</label>
+            <input type="time" id="cStart" value="19:00" step="1800">
+          </div>
+          <div class="field">
+            <label class="required">結束時間</label>
+            <input type="time" id="cEnd" value="21:00" step="1800">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>名額上限</label>
+            <input type="number" id="cCap" placeholder="留空=不限" min="1" max="999">
+          </div>
+          <div class="field">
+            <label>地點</label>
+            <input type="text" id="cLoc" placeholder="例如：新竹教室">
+          </div>
+        </div>
+        <div class="field">
+          <label>課程說明</label>
+          <textarea id="cDesc" placeholder="顯示在報名頁的介紹文字（選填）"></textarea>
+        </div>
+        <label class="chk">
+          <input type="checkbox" id="cCal" checked>
+          同時建立 Google Calendar 事件（報名名單會自動同步到事件說明）
+        </label>
+        <button class="btn btn-primary btn-small" onclick="createCourse()" id="createBtn">建立課程</button>
+      </div>
+
+      <div class="admin-panel ${adminTab==='manage'?'active':''}">
+        <div class="hint">點「看名單」展開報名學員。關閉報名後課程不再顯示於報名頁，但名單保留。</div>
+        <div id="courseAdminList"><div class="hint">載入中...</div></div>
+        <button class="btn btn-ghost btn-small" style="width:100%;margin-top:8px" onclick="loadAdminCourses()">重新整理</button>
+      </div>
+    </div>`;
+}
+
+function switchTab(t){ adminTab=t; renderAdmin(); if(t==='manage') loadAdminCourses(); }
+
+async function createCourse() {
+  const btn = document.getElementById('createBtn');
+  const payload = {
+    name: document.getElementById('cName').value.trim(),
+    date: document.getElementById('cDate').value,
+    startTime: document.getElementById('cStart').value,
+    endTime: document.getElementById('cEnd').value,
+    capacity: document.getElementById('cCap').value,
+    location: document.getElementById('cLoc').value.trim(),
+    description: document.getElementById('cDesc').value.trim(),
+    withCalendar: document.getElementById('cCal').checked,
+  };
+  if (!payload.name) { showToast('請填寫課程名稱', 'error'); return; }
+  btn.disabled = true; btn.textContent = '建立中...';
+  try {
+    const res = await fetch(`${API}/api/admin/courses/create`, {
+      method:'POST', headers: adminHeaders(), body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('課程已建立', 'success');
+      document.getElementById('cName').value = '';
+      document.getElementById('cDesc').value = '';
+      document.getElementById('cCap').value = '';
+      loadCourses();
+    } else showToast(data.error || '建立失敗', 'error');
+  } catch (e) { showToast('網路錯誤', 'error'); }
+  btn.disabled = false; btn.textContent = '建立課程';
+}
+
+async function loadAdminCourses() {
+  const box = document.getElementById('courseAdminList');
+  if (!box) return;
+  try {
+    const res = await fetch(`${API}/api/admin/courses`, { headers: adminHeaders() });
+    const data = await res.json();
+    adminCourses = data.courses || [];
+    if (!adminCourses.length) { box.innerHTML = '<div class="hint">還沒有任何課程。</div>'; return; }
+    box.innerHTML = adminCourses.map(c => {
+      const cls = c.past ? 'past' : (c.status === '開放報名' ? 'open' : 'closed');
+      const label = c.past ? '已結束' : c.status;
+      const cap = c.capacity ? ` / ${c.capacity}` : '';
+      return `<div class="mini">
+        <div class="mini-head">
+          <div>
+            <strong>${esc(c.name)}</strong><br>
+            <span style="color:var(--text-light)">
+              ${fDate(c.start)} ${fWeek(c.start)} ${fTime(c.start)}${c.end?'–'+fTime(c.end):''}
+              ${c.location ? ' · '+esc(c.location) : ''}<br>
+              報名 ${c.enrolled}${cap} 人
+            </span>
+          </div>
+          <span class="ms-status ${cls}">${esc(label)}</span>
+        </div>
+        <div class="mini-actions">
+          <button onclick="toggleRoster('${c.id}')">看名單</button>
+          ${!c.past ? `<button onclick="setStatus('${c.id}','${c.status==='開放報名'?'已關閉':'開放報名'}')">${c.status==='開放報名'?'關閉報名':'重新開放'}</button>` : ''}
+          <button onclick="copyRoster('${c.id}')">複製名單</button>
+          <button style="color:var(--error)" onclick="delCourse('${c.id}')">刪除</button>
+        </div>
+        <div id="roster-${c.id}"></div>
+      </div>`;
+    }).join('');
+  } catch (e) { box.innerHTML = '<div class="hint" style="color:var(--error)">載入失敗</div>'; }
+}
+
+async function fetchRoster(courseId) {
+  const res = await fetch(`${API}/api/admin/courses/roster?courseId=${encodeURIComponent(courseId)}`, { headers: adminHeaders() });
+  const data = await res.json();
+  return data.roster || [];
+}
+
+async function toggleRoster(courseId) {
+  const box = document.getElementById(`roster-${courseId}`);
+  if (!box) return;
+  if (box.innerHTML) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="hint" style="margin:8px 0 0">載入中...</div>';
+  try {
+    const roster = await fetchRoster(courseId);
+    box.innerHTML = roster.length
+      ? `<div class="roster">${roster.map((r,i)=>
+          `${i+1}. ${esc(r.studentName)}${r.contact?' · '+esc(r.contact):''}${r.notes?'<br><span style="color:var(--text-light);padding-left:14px">'+esc(r.notes)+'</span>':''}`
+        ).join('<br>')}</div>`
+      : '<div class="roster" style="color:var(--text-light)">尚無人報名</div>';
+  } catch (e) { box.innerHTML = '<div class="hint" style="color:var(--error)">載入失敗</div>'; }
+}
+
+async function copyRoster(courseId) {
+  try {
+    const roster = await fetchRoster(courseId);
+    const c = adminCourses.find(x => x.id === courseId);
+    const text = [
+      `${c ? c.name : ''}（${roster.length} 人）`,
+      ...roster.map((r,i)=>`${i+1}. ${r.studentName}${r.contact?' '+r.contact:''}${r.notes?' — '+r.notes:''}`),
+    ].join('\n');
+    await navigator.clipboard.writeText(text);
+    showToast('名單已複製', 'success');
+  } catch (e) { showToast('複製失敗', 'error'); }
+}
+
+async function setStatus(id, status) {
+  try {
+    const res = await fetch(`${API}/api/admin/courses/status`, {
+      method:'POST', headers: adminHeaders(), body: JSON.stringify({ id, status }) });
+    const data = await res.json();
+    if (data.ok) { showToast(status==='已關閉'?'已關閉報名':'已重新開放', 'success'); loadAdminCourses(); loadCourses(); }
+    else showToast(data.error || '更新失敗', 'error');
+  } catch (e) { showToast('網路錯誤', 'error'); }
+}
+
+async function delCourse(id) {
+  const c = adminCourses.find(x => x.id === id);
+  if (!confirm(`確定刪除「${c ? c.name : ''}」？\n\n行事曆事件會一併移除，報名紀錄會保留在 Notion。此動作無法復原。`)) return;
+  try {
+    const res = await fetch(`${API}/api/admin/courses/delete`, {
+      method:'POST', headers: adminHeaders(), body: JSON.stringify({ id }) });
+    const data = await res.json();
+    if (data.ok) { showToast('已刪除', 'success'); loadAdminCourses(); loadCourses(); }
+    else showToast(data.error || '刪除失敗', 'error');
+  } catch (e) { showToast('網路錯誤', 'error'); }
+}
+
+// ════════════════════════════════════════
+// 報名主流程
+// ════════════════════════════════════════
+let courses = [];
+let selectedId = null;
+
+async function loadCourses() {
+  try {
+    const res = await fetch(`${API}/api/courses`);
+    const data = await res.json();
+    courses = data.courses || [];
+    render();
+  } catch (e) {
+    document.getElementById('app').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><div>無法載入課程，請稍後再試</div></div>';
+  }
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (!courses.length) {
+    app.innerHTML = '<div class="empty"><div class="empty-icon">📚</div><div>目前沒有開放報名的課程<br>請稍後再查看</div></div>';
+    return;
+  }
+
+  let html = '';
+  courses.forEach(c => {
+    const sel = c.id === selectedId ? ' selected' : '';
+    const full = c.full ? ' full' : '';
+    const hasCap = c.capacity != null && c.capacity > 0;
+    const pct = hasCap ? Math.min(100, Math.round(c.enrolled / c.capacity * 100)) : 0;
+    const remain = hasCap ? c.capacity - c.enrolled : null;
+    const fillCls = c.full ? 'full' : (hasCap && remain <= 3 ? 'warn' : '');
+
+    let badge = '';
+    if (c.full) badge = '<span class="badge-full">額滿</span>';
+    else if (hasCap && remain <= 3) badge = `<span class="badge-few">剩 ${remain} 位</span>`;
+
+    html += `<div class="course${sel}${full}" onclick="${c.full ? '' : `selectCourse('${c.id}')`}">
+      <div class="course-name">${esc(c.name)}${badge}</div>
+      <div class="course-meta">
+        <span class="ico">📅</span>${fDate(c.start)} ${fWeek(c.start)}<br>
+        <span class="ico">🕐</span>${fTime(c.start)}${c.end ? ' – '+fTime(c.end) : ''}
+        ${c.location ? `<br><span class="ico">📍</span>${esc(c.location)}` : ''}
+      </div>
+      ${hasCap ? `<div class="cap-row">
+        <div class="cap-bar"><div class="cap-fill ${fillCls}" style="width:${pct}%"></div></div>
+        <div class="cap-text">${c.enrolled} / ${c.capacity}</div>
+      </div>` : `<div class="cap-row"><div class="cap-text">已報名 ${c.enrolled} 人・不限名額</div></div>`}
+      ${c.description ? `<div class="course-desc">${esc(c.description)}</div>` : ''}
+    </div>`;
+  });
+
+  html += `<div class="form-section${selectedId ? '' : ' hidden'}" id="enrollForm">
+    <div class="form-title">填寫報名資料</div>
+    <div class="field">
+      <label class="required">你的姓名</label>
+      <input type="text" id="sName" placeholder="請輸入姓名" maxlength="50">
+    </div>
+    <div class="field">
+      <label>聯絡方式</label>
+      <input type="text" id="sContact" placeholder="手機或 Email（方便通知課程異動）" maxlength="100">
+    </div>
+    <div class="field">
+      <label>備註（選填）</label>
+      <textarea id="sNotes" placeholder="想了解的主題、飲食需求等" maxlength="1000"></textarea>
+    </div>
+    <button class="btn btn-primary" id="enrollBtn" onclick="submitEnroll()">確認報名</button>
+  </div>`;
+
+  app.innerHTML = html;
+}
+
+function selectCourse(id) {
+  selectedId = (selectedId === id) ? null : id;
+  render();
+  if (selectedId) {
+    setTimeout(() => document.getElementById('enrollForm').scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
+  }
+}
+
+async function submitEnroll() {
+  const name = document.getElementById('sName').value.trim();
+  const contact = document.getElementById('sContact').value.trim();
+  const notes = document.getElementById('sNotes').value.trim();
+  if (!name) { showToast('請填寫你的姓名', 'error'); return; }
+
+  const btn = document.getElementById('enrollBtn');
+  btn.disabled = true; btn.textContent = '報名中...';
+  try {
+    const res = await fetch(`${API}/api/enroll`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId: selectedId, studentName: name, contact, notes }),
+    });
+    const data = await res.json();
+    if (data.ok) showSuccess(name, data);
+    else {
+      showToast(data.error || '報名失敗，請重試', 'error');
+      btn.disabled = false; btn.textContent = '確認報名';
+      selectedId = null;
+      loadCourses();
+    }
+  } catch (e) {
+    showToast('網路錯誤，請稍後再試', 'error');
+    btn.disabled = false; btn.textContent = '確認報名';
+  }
+}
+
+function showSuccess(name, data) {
+  const c = data.course;
+  const cancelUrl = data.cancelUrl || `${location.origin}${location.pathname}?cancel=${data.cancelToken}`;
+  document.getElementById('adminArea').innerHTML = '';
+  document.getElementById('navLink').style.display = 'none';
+  document.getElementById('app').innerHTML = `<div class="success-screen">
+    <div class="success-icon">🎉</div>
+    <h2>報名成功！</h2>
+    <p>期待在課堂上見到你</p>
+    <div class="success-detail">
+      <strong>報名人：</strong>${esc(name)}<br>
+      <strong>課程：</strong>${esc(c.name)}<br>
+      <strong>時間：</strong>${fDate(c.start)} ${fWeek(c.start)} ${fTime(c.start)}${c.end?' – '+fTime(c.end):''}
+      ${c.location ? `<br><strong>地點：</strong>${esc(c.location)}` : ''}
+      <br><strong>目前報名：</strong>${data.enrolled}${data.capacity ? ' / '+data.capacity : ''} 人
+    </div>
+    <div class="cancel-note">
+      <strong style="color:var(--text)">需要取消報名？</strong><br>
+      請保存以下連結（建議截圖或加到書籤）。課程前 ${data.cancelCutoffHours || CONFIG.cancelCutoffHours} 小時之前都可以自行取消：<br>
+      <a href="${esc(cancelUrl)}">${esc(cancelUrl)}</a><br><br>
+      <button class="btn btn-ghost btn-small" style="width:100%" onclick="copyText('${esc(cancelUrl)}')">複製取消連結</button>
+    </div>
+  </div>`;
+}
+
+function copyText(t) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(t).then(
+      () => showToast('已複製', 'success'),
+      () => showToast('複製失敗，請長按連結手動複製', 'error'));
+  } else showToast('請長按連結手動複製', 'error');
+}
+
+// ════════════════════════════════════════
+// 取消報名頁
+// ════════════════════════════════════════
+async function renderCancelPage() {
+  document.getElementById('pageTitle').textContent = '取消報名';
+  document.getElementById('pageSubtitle').textContent = '';
+  document.getElementById('navLink').style.display = 'none';
+  document.title = '取消報名';
+  const app = document.getElementById('app');
+  try {
+    const res = await fetch(`${API}/api/enroll/cancel?token=${encodeURIComponent(cancelToken)}`);
+    const data = await res.json();
+    if (!data.ok) {
+      app.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><div>${esc(data.error)}</div></div>`;
+      return;
+    }
+    const b = data.booking;
+    const detail = `<div class="success-detail">
+      <strong>報名人：</strong>${esc(b.studentName)}<br>
+      <strong>課程：</strong>${esc(b.courseName)}<br>
+      <strong>時間：</strong>${fDate(b.start)} ${fWeek(b.start)} ${fTime(b.start)}${b.end?' – '+fTime(b.end):''}
+      ${b.location ? `<br><strong>地點：</strong>${esc(b.location)}` : ''}
+    </div>`;
+
+    if (b.cancelled) {
+      app.innerHTML = `<div class="success-screen"><div class="success-icon">🗑️</div>
+        <h2>此報名已取消</h2><p>名額已釋出</p>${detail}</div>`;
+      return;
+    }
+    if (!data.canCancel) {
+      app.innerHTML = `<div class="success-screen"><div class="success-icon">⏰</div>
+        <h2>已超過可取消時間</h2>
+        <p>課程前 ${data.cutoffHours} 小時內無法自行取消<br>請直接聯繫老師</p>${detail}</div>`;
+      return;
+    }
+    app.innerHTML = `<div class="form-section">
+      <div class="form-title">確認取消這筆報名？</div>
+      ${detail}
+      <div class="hint" style="margin-top:14px">取消後名額會立刻釋出給其他人。此動作無法復原。</div>
+      <button class="btn btn-danger" id="cancelBtn" onclick="doCancel()">確認取消報名</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-ghost" onclick="location.href=location.pathname">返回課程列表</button>
+    </div>`;
+  } catch (e) {
+    app.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div>無法連線，請稍後再試</div></div>';
+  }
+}
+
+async function doCancel() {
+  if (!confirm('確定要取消這筆報名嗎？此動作無法復原。')) return;
+  const btn = document.getElementById('cancelBtn');
+  btn.disabled = true; btn.textContent = '取消中...';
+  try {
+    const res = await fetch(`${API}/api/enroll/cancel`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token: cancelToken }) });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('app').innerHTML = `<div class="success-screen">
+        <div class="success-icon">✅</div><h2>已取消報名</h2>
+        <p>名額已釋出，如需重新報名請回到課程列表</p>
+        <div style="height:20px"></div>
+        <button class="btn btn-primary" onclick="location.href=location.pathname">回課程列表</button>
+      </div>`;
+    } else {
+      showToast(data.error || '取消失敗', 'error');
+      btn.disabled = false; btn.textContent = '確認取消報名';
+    }
+  } catch (e) {
+    showToast('網路錯誤，請稍後再試', 'error');
+    btn.disabled = false; btn.textContent = '確認取消報名';
+  }
+}
+
+// ── 啟動 ──
+loadConfig().then(() => {
+  if (cancelToken) { renderCancelPage(); return; }
+  initAdmin();
+  loadCourses();
+});
+</script>
+</body>
+</html>
