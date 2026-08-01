@@ -1,0 +1,77 @@
+name: Discord Issue 即時通知
+on:
+  issues:
+    types:
+      - opened
+      - reopened
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: read
+jobs:
+  notify:
+    name: 推送 Issue 通知到迷你課工作頻道
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        uses: actions/github-script@v7
+        env:
+          KAIROS_DISCORD_BOT_TOKEN: ${{ secrets.KAIROS_DISCORD_BOT_TOKEN }}
+          DISCORD_THREAD_ID: '1532563210455093251'
+        with:
+          script: |
+            const botToken = process.env.KAIROS_DISCORD_BOT_TOKEN;
+            if (!botToken) {
+              core.setFailed('Missing repository secret: KAIROS_DISCORD_BOT_TOKEN');
+              return;
+            }
+            const repositoryName = `${context.repo.owner}/${context.repo.repo}`;
+            const isManualTest = context.eventName === 'workflow_dispatch';
+            let embed;
+            if (isManualTest) {
+              embed = {
+                title: 'GitHub Issue 即時通知測試',
+                description: '這是手動測試訊息，用來確認迷你課 Issue 通知可以送達工作頻道。',
+                color: 0x21a4b1,
+                fields: [
+                  { name: 'Repository', value: repositoryName, inline: true },
+                  { name: 'Workflow', value: context.workflow, inline: true },
+                  {
+                    name: '執行紀錄',
+                    value: `[查看 GitHub Actions](${context.serverUrl}/${repositoryName}/actions/runs/${context.runId})`,
+                    inline: false,
+                  },
+                ],
+                timestamp: new Date().toISOString(),
+              };
+            } else {
+              const issue = context.payload.issue;
+              const actionLabel = context.payload.action === 'reopened' ? 'Issue 重新開啟' : '新 Issue';
+              embed = {
+                title: `${actionLabel}：#${issue.number} ${issue.title}`.slice(0, 256),
+                url: issue.html_url,
+                color: 0xf59e0b,
+                fields: [
+                  { name: '作者', value: `${issue.user.login} (${issue.author_association})`, inline: true },
+                  { name: 'Repository', value: repositoryName, inline: true },
+                  { name: '下一步', value: 'AI 助教排程會讀完整課程內容後直接回答；若教材有共通缺口，會先補課再回覆。', inline: false },
+                ],
+                footer: { text: 'Claude Code 迷你課 AI 助教' },
+                timestamp: new Date().toISOString(),
+              };
+            }
+            const response = await fetch(
+              `https://discord.com/api/v10/channels/${process.env.DISCORD_THREAD_ID}/messages`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bot ${botToken}`,
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'Lifehacker Mini Course Issue Notifier/1.0',
+                },
+                body: JSON.stringify({ embeds: [embed] }),
+              },
+            );
+            if (!response.ok) {
+              core.setFailed(`Discord notification failed: ${response.status} ${await response.text()}`);
+            }
